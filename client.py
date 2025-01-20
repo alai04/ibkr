@@ -12,7 +12,7 @@ class IBClient(EClient):
     def get_historical_data(self, request_id, contract, duration, bar_size):
         self.reqHistoricalData(
             reqId=request_id, contract=contract, endDateTime='',
-            duration=duration, barSizeSetting=bar_size,
+            durationStr=duration, barSizeSetting=bar_size,
             whatToShow='MIDPOINT', useRTH=1, formatDate=1,
             keepUpToDate=False, chartOptions=[],
         )
@@ -29,3 +29,14 @@ class IBClient(EClient):
         df['symbol'] = contract.symbol
         df.request_id = request_id
         return df
+
+    def get_historical_data_for_many(self, request_id, contracts, duration, bar_size, col_to_use='close'):
+        dfs = []
+        for contract in contracts:
+            data = self.get_historical_data(
+                request_id, contract, duration, bar_size)
+            dfs.append(data)
+            request_id += 1
+        return pd.concat(dfs).reset_index().pivot(
+            index='time', columns='symbol', values=col_to_use,
+        )
